@@ -1,5 +1,4 @@
-pragma experimental ABIEncoderV2;
-
+pragma solidity ^0.5.1;
 
 contract Agent {
     
@@ -9,8 +8,6 @@ contract Agent {
         address[] doctorAccessList;
         uint[] diagnosis;
         string record;
-        bytes32[] medicalRecords;
-        bytes32[]medicalRecords1;
     }
     
     struct doctor {
@@ -24,12 +21,12 @@ contract Agent {
     address[] public patientList;
     address[] public doctorList;
 
-    mapping (address => patient) public patientInfo;
+    mapping (address => patient) patientInfo;
     mapping (address => doctor) doctorInfo;
     mapping (address => address) Empty;
     // might not be necessary
     mapping (address => string) patientRecords;
-    mapping(address=> bytes32 )patientmedicalrecord;
+    
 
 
     function add_agent(string memory _name, uint _age, uint _designation, string memory _hash) public returns(string memory){
@@ -41,13 +38,13 @@ contract Agent {
             p.age = _age;
             p.record = _hash;
             patientInfo[msg.sender] = p;
-            patientList.push(addr);
+            patientList.push(addr)-1;
             return _name;
         }
        else if (_designation == 1){
             doctorInfo[addr].name = _name;
             doctorInfo[addr].age = _age;
-            doctorList.push(addr);
+            doctorList.push(addr)-1;
             return _name;
        }
        else{
@@ -56,9 +53,9 @@ contract Agent {
     }
 
 
-    function get_patient(address addr) view public returns (string memory , uint, uint[] memory , address, string memory, bytes32[] memory ){
+    function get_patient(address addr) view public returns (string memory , uint, uint[] memory , address, string memory ){
         // if(keccak256(patientInfo[addr].name) == keccak256(""))revert();
-        return (patientInfo[addr].name, patientInfo[addr].age, patientInfo[addr].diagnosis, Empty[addr], patientInfo[addr].record, patientInfo[addr].medicalRecords);
+        return (patientInfo[addr].name, patientInfo[addr].age, patientInfo[addr].diagnosis, Empty[addr], patientInfo[addr].record);
     }
 
     function get_doctor(address addr) view public returns (string memory , uint){
@@ -68,37 +65,24 @@ contract Agent {
     function get_patient_doctor_name(address paddr, address daddr) view public returns (string memory , string memory ){
         return (patientInfo[paddr].name,doctorInfo[daddr].name);
     }
-    function upload_patient_health_record(bytes32 filehash,bytes32 filehash2) payable public  {
-        
-        patientInfo[msg.sender].medicalRecords.push(filehash);
-        patientInfo[msg.sender].medicalRecords1.push(filehash2);
-        // return patientInfo[addr].medicalRecords;
-    }
+
     function permit_access(address addr) payable public {
         require(msg.value == 2 ether);
 
         creditPool += 2;
         
-        doctorInfo[addr].patientAccessList.push(msg.sender);
-        patientInfo[msg.sender].doctorAccessList.push(addr);
+        doctorInfo[addr].patientAccessList.push(msg.sender)-1;
+        patientInfo[msg.sender].doctorAccessList.push(addr)-1;
         
     }
-    function stringToBytes32(string memory source) public pure returns (bytes32 result) {
-    bytes memory tempEmptyStringTest = bytes(source);
-    if (tempEmptyStringTest.length == 0) {
-        return 0x0;
-    }
 
-    assembly {
-        result := mload(add(source, 32))
-    }
-    }
 
     //must be called by doctor
     function insurance_claim(address paddr, uint _diagnosis, string memory  _hash) public {
         bool patientFound = false;
         for(uint i = 0;i<doctorInfo[msg.sender].patientAccessList.length;i++){
             if(doctorInfo[msg.sender].patientAccessList[i]==paddr){
+                msg.sender.transfer(2 ether);
                 creditPool -= 2;
                 patientFound = true;
                 
@@ -138,7 +122,7 @@ contract Agent {
                 delete Array[Array.length - 1];
 
             }
-          
+            Array.length--;
         }
     }
 
@@ -160,7 +144,8 @@ contract Agent {
     
     function revoke_access(address daddr) public payable{
         remove_patient(msg.sender,daddr);
-        
+        msg.sender.transfer(2 ether);
+        creditPool -= 2;
     }
 
     function get_patient_list() public view returns(address[] memory ){
@@ -171,15 +156,11 @@ contract Agent {
         return doctorList;
     }
 
-    function get_hash(address paddr) public view returns(string memory, bytes32[] memory,bytes32 []memory ){
-        bytes32[] storage hashvaler=patientInfo[paddr].medicalRecords;
-        bytes32[] storage hashq=patientInfo[paddr].medicalRecords1;
-        return (patientInfo[paddr].record, hashvaler,hashq);
-
+    function get_hash(address paddr) public view returns(string memory ){
+        return patientInfo[paddr].record;
     }
 
     function set_hash(address paddr, string memory _hash) internal {
-        
         patientInfo[paddr].record = _hash;
     }
 

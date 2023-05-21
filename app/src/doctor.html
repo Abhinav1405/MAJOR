@@ -116,6 +116,7 @@
                             <tr>
                                 <th>Patient</th>
                                 <th class="publicKeyPatient">Public Key</th>
+                                <th class="medicalRecords">Medical Records</th>
                                 <th>Action</th>
                             </tr>
                         </table>
@@ -208,6 +209,40 @@
         });
 
     });
+
+    function getDocumentsHtml(hash1, hash2, index){
+        // Convert byte to str
+        const decoder = new TextDecoder('UTF-8');
+        // console.log("fdas=="+hash1);
+        // console.log("gefa"+hash2+"                    fdajsng"+hash1);
+        // hash1= String(hash1)
+        // console.log("heloo="+hash1);
+        // hash2=String(hash2)
+        // console.log("hash2"+hash2);
+        var stringHash1 = web3.toAscii(hash1);
+        // console.log("done1")
+        var stringHash2 = web3.toAscii(hash2);
+        stringHash1 = stringHash1.slice(0, -9);
+        // console.log("ge"+stringHash2);
+        stringHash2 = stringHash2.slice(0, -9);
+        console.log(stringHash1+stringHash2);
+        console.log("Making anchor tag")
+        content = `<div class="row">
+            <a target='blank' href=${"http://localhost:8080/ipfs/"+ stringHash2 + stringHash1}> Document ${index+1} </a>
+        </div>
+        `
+        console.log("Made anchor tag")
+        return content;
+    }
+
+    function getDocumentContent(content){
+        element = ""
+        content.map((el)=>{
+            element+=el;
+        })
+        return element;
+
+    }
         
     function showRecords(element){
 
@@ -221,13 +256,25 @@
             
             contractInstance.get_hash(patientAddress, {gas: 1000000}, function(error, result){
                 console.log(error);
-                console.log(result);
+                console.log("Fron inside fxn")
+                console.log(result[1]);
+                console.log(result[2]);
+                console.log(result[0]);
                 if(!error){
 
-                    $.get("http://localhost:8080/ipfs/"+result, function(data){
+                    $.get("http://localhost:8080/ipfs/"+result[0], function(data){
                         patientRecord = data;
-                        console.log(patientAddress)
-                        console.log()
+                        documentContent = ""
+                        console.log("GAs");
+                        for(let i=0;i<result[1].length;i++){
+                             console.log("hey"+result[1][i]+"hello"+result[2][i]);
+                            res = getDocumentsHtml(result[1][i], result[2][i], i);
+                            documentContent+=res;
+                        }
+                        console.log("feas");
+
+                        // console.log(documentContent);
+
 
                         content = `<div class="tab-content">
                         <div id="view${patientAddress}">
@@ -236,6 +283,11 @@
                                         <pre style="margin: 20px 0;" id="records${patientAddress}">${patientRecord}</pre>
                                     </div>
                                 </div>
+                                
+                                ${documentContent}
+                                
+                               
+                                
                                 <div class="row">
                                     <div class="col-sm-12">
                                         <div class="row">
@@ -280,15 +332,19 @@
             
                         var row1 = table.insertRow(index+1);
                         var cell1 = row1.insertCell(0);
+                       
+                        
                         cell1.colSpan = 3;
 
                         cell1.innerHTML=content;
+
 
                     })
 
                     
                 }else{
-                    console.log(error);
+
+                    console.log("Error here",error);
                 }
             })            
 

@@ -76,6 +76,9 @@
     
     <script src="/js/web3.min.js"></script>
     <script src="https://unpkg.com/ipfs-api/dist/index.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/core.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.9-1/md5.js"></script>
+
 </head>
 
 <body>
@@ -205,7 +208,10 @@
 <script src="js/app.js"></script>
 
 <script>
+   
 
+// @ts-ignore
+   
     var url_string = window.location.href;
     var url = new URL(url_string);
     var key ;
@@ -448,41 +454,127 @@
 
     }
 
-
+   
     function uploadFileToIPFS(){
-        console.log(contractInstance.upload_patient_health_record);
-        // if(fileBuffer==""){
-        //     $(".alert-danger").show();
-        //     console.log("Please upload a file")
-        //     return;
-        // }
+      
+        if(fileBuffer==""){
+            $(".alert-danger").show();
+            console.log("Please upload a file")
+            contractInstance.get_hash(key,{gas: 1000000}, function(error, result){
+                            console.log(result);
+                            console.log(error);
+                        })
+            return;
+        }
 
-        // var ipfs = window.IpfsApi('localhost', '5001')
-        // // var ipfs = ipfsAPI('/ip4/127.0.0.1/tcp/5001')
+        var ipfs = window.IpfsApi('localhost', '5001')
+        // var ipfs = ipfsAPI('/ip4/127.0.0.1/tcp/5001')
                 
-        // var buffer = fileBuffer;
+        var buffer = fileBuffer;
+        
+        
+         ipfs.files.add(buffer, (error, result) => {
+            if(error){
+                console.log(error);
+            }
+            else{
+                console.log("result:"+result);
+                console.log("result"+result[0].hash);
+                let fileHash = result[0].hash;
+                
+                
+
+                console.log("Ipfs hash:"+fileHash);
+                // console.log(contractInstance.stringToBytes32(fileHash));
+                var buffer = new ArrayBuffer(64);
+                var fileHash2="";
+                var fileHash3="";
+                for(let i=0;i<fileHash.length/2;i++)
+                {
+                    fileHash2=fileHash2+fileHash[i];
+
+                }
+                for(let i=fileHash.length/2;i<fileHash.length;i++)
+                {
+                    fileHash3=fileHash3+fileHash[i];
+
+                }
+                var c="";
+                contractInstance.stringToBytes32.call(fileHash2, {gas: 1000000}, function(error, result){
+                if(!error)
+                {
+                    c=result;
+                }
+                });
+                contractInstance.stringToBytes32.call(fileHash3, {gas: 1000000}, function(error, result){
+                    if(!error)
+                {
+                    var b= result;
+                    contractInstance.upload_patient_health_record.sendTransaction(b,c,{from: key, value: web3.toWei(0, 'ether')}, function(error){
+                    // console.log(result);
+                    // for(let i=0;i<3,i++)
+        //             {
+        //                 contractInstance.upload_patient_health_record.sendTransaction(a,b,c,{from: key, value: web3.toWei(0, 'ether')}, function(error){});
+
+        //             }
+                    console.log(fileHash);
+                    console.log("b====="+c+b); 
+                    if(!error) {
+                        console.log("Your file has been uploaded successfully.")
+                        // contractInstance.get_hash(key,{gas: 1000000}, function(error, result){
+                        //     console.log(result);
+                        //     console.log(error);
+                        // })
+                    } 
                     
-        //  ipfs.files.add(buffer, (error, result) => {
-        //     if(error){
-        //         console.log(error);
-        //     }else{
-        //         console.log("result:"+result);
-        //         const fileHash = result[0].hash;
-        //         console.log("Ipfs hash:"+fileHash);
+                    else
+                        console.error(error);
+
+                    }
+                    );
+                }
+                });
                 
+        //         contractInstance.upload_patient_health_record.sendTransaction(b,{from: key, value: web3.toWei(0, 'ether')}, function(error){
+        //             // console.log(result);
+        //             // for(let i=0;i<3,i++)
+        // //             {
+        // //                 contractInstance.upload_patient_health_record.sendTransaction(a,b,c,{from: key, value: web3.toWei(0, 'ether')}, function(error){});
 
-
-
-        //         contractInstance.uploadPatientHealthRecord.call(fileHash, {gas: 1000000},function(error, result){
+        // //             }
+        //             console.log(fileHash1);
         //             if(!error) {
         //                 console.log("Your file has been uploaded successfully.")
+        //                 // contractInstance.get_hash(key,{gas: 1000000}, function(error, result){
+        //                 //     console.log(result);
+        //                 //     console.log(error);
+        //                 // })
         //             } 
+                    
         //             else
         //                 console.error(error);
-        //             });
 
-        //     }
-        // })
+        //             }
+        //             );
+                    
+                    contractInstance.get_hash(key,{gas: 1000000}, function(error, result){
+                            console.log(result);
+                            console.log(error);
+                        })
+                    // console.log(contractInstance.upload_patient_health_record.medicalRecords);
+
+
+            }
+            contractInstance.get_hash(key,{gas: 1000000}, function(error, result){
+                            console.log(result);
+                            console.log(error);
+                        })
+            
+            
+        })
+        
+      
+
     }
 
     

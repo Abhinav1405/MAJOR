@@ -18,6 +18,7 @@ module.exports = {
      network_id: "*",       // Any network (default: none)
     },
   },
+  contracts_build_directory: './build/contracts/',
 
   // Set default mocha options here, use special reporters etc.
   mocha: {
